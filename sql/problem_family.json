@@ -1,0 +1,190 @@
+{
+  "difficulty": {
+    "levels": {
+      "easy": { "min": 0.0, "max": 2.4 },
+      "medium": { "min": 2.5, "max": 4.9 },
+      "hard": { "min": 5.0, "max": 99.0 }
+    },
+    "bonus": {
+      "per_table": 1.0
+    },
+    "penalty": {
+      "select_star_only": -1,
+      "no_predicates": -2,
+      "limit_only": -1.6
+    }
+  },
+  "problem_family_base": {
+    "relational_joining": 1.2,
+    "aggregation_and_having": 1.4,
+    "set_algebra": 1.6,
+    "subquery_semantics": 1.8,
+    "window_analytics": 2.2,
+    "hierarchical_paths": 2.8,
+    "data_mutation": 1.6
+  },
+  "family_features": {
+    "relational_joining": {
+      "join_count_2": {
+        "description": "Query uses exactly two JOIN operations across distinct relations.",
+        "difficulty_score": 1.0
+      },
+      "join_count_3plus": {
+        "description": "Query uses three or more JOIN operations, forming a multi-hop join path.",
+        "difficulty_score": 2.0
+      },
+      "alternative_join_present": {
+        "description": "At least one FULL/OUTER/LEFT/RIGHT join (i.e. non-default INNER JOIN) is required for correct semantics.",
+        "difficulty_score": 0.9
+      },
+      "composite_key_join": {
+        "description": "Join condition references two or more columns on at least one side.",
+        "difficulty_score": 0.8
+      },
+      "self_join": {
+        "description": "A table is joined to itself to compare or relate rows within the same relation.",
+        "difficulty_score": 0.6
+      }
+    },
+    "aggregation_and_having": {
+      "group_keys_2plus": {
+        "description": "Grouping performed on at least two distinct grouping keys.",
+        "difficulty_score": 0.8
+      },
+      "having_predicates": {
+        "description": "Non-trivial conditions applied in HAVING to filter aggregated groups.",
+        "difficulty_score": 0.9
+      },
+      "count_distinct": {
+        "description": "Use of COUNT(DISTINCT ...) or equivalent distinct-aware aggregation.",
+        "difficulty_score": 0.7
+      },
+      "multi_metric_agg_3plus": {
+        "description": "At least three different aggregate metrics produced in the same result.",
+        "difficulty_score": 1.2
+      },
+      "agg_on_derived_expr": {
+        "description": "Aggregations computed over derived expressions (e.g., SUM(price*qty)).",
+        "difficulty_score": 0.5
+      }
+    },
+    "set_algebra": {
+      "set_ops_2": {
+        "description": "Exactly two set operations combine intermediate result sets.",
+        "difficulty_score": 0.9
+      },
+      "set_ops_3plus": {
+        "description": "Three or more set operations chained in a single query.",
+        "difficulty_score": 1.8
+      },
+      "mixed_set_kinds": {
+        "description": "Different set operators (e.g., UNION then EXCEPT) used within the same query.",
+        "difficulty_score": 0.6
+      },
+      "set_members_with_agg": {
+        "description": "Each set member branch includes its own aggregation or GROUP BY.",
+        "difficulty_score": 0.8
+      },
+      "dedupe_vs_union_all_logic": {
+        "description": "Intentional use of DISTINCT vs ALL to control deduplication behavior.",
+        "difficulty_score": 0.4
+      }
+    },
+    "subquery_semantics": {
+      "exists_or_not_exists": {
+        "description": "Semantics hinge on EXISTS or NOT EXISTS predicates.",
+        "difficulty_score": 0.9
+      },
+      "in_or_not_in": {
+        "description": "Membership logic expressed via IN or NOT IN subqueries.",
+        "difficulty_score": 0.7
+      },
+      "correlated_depth_2plus": {
+        "description": "Nested correlated subqueries with depth of two or more.",
+        "difficulty_score": 2.0
+      },
+      "scalar_subquery": {
+        "description": "Scalar subquery used in an expression or comparison.",
+        "difficulty_score": 0.8
+      },
+      "quantified_comparison_any_all": {
+        "description": "Use of ANY or ALL with a subquery in a quantified comparison.",
+        "difficulty_score": 1.2
+      }
+    },
+    "window_analytics": {
+      "frame_spec_explicit": {
+        "description": "Explicit ROWS/RANGE frame clause defined for a window.",
+        "difficulty_score": 0.6
+      },
+      "multi_windows_2plus": {
+        "description": "Two or more distinct window expressions are applied.",
+        "difficulty_score": 1.2
+      },
+      "window_based_dedup": {
+        "description": "Deduplication performed via window rank (e.g., ROW_NUMBER()=1).",
+        "difficulty_score": 0.8
+      },
+      "rank_then_filter": {
+        "description": "Window-produced ranks or metrics are filtered in an outer query.",
+        "difficulty_score": 0.7
+      },
+      "chained_window_dependency": {
+        "description": "A window computation depends on the output of another window computation.",
+        "difficulty_score": 1.4
+      }
+    },
+    "hierarchical_paths": {
+      "recursive_cte_present": {
+        "description": "Recursive CTE (WITH RECURSIVE) constructs the traversal.",
+        "difficulty_score": 1.4
+      },
+      "branching_unionall": {
+        "description": "Recursive step branches via UNION ALL into multiple paths.",
+        "difficulty_score": 0.8
+      },
+      "cycle_guard": {
+        "description": "Cycle-prevention logic present (visited set or explicit depth cap).",
+        "difficulty_score": 0.6
+      },
+      "path_aggregation": {
+        "description": "Aggregation performed along paths (e.g., cumulative cost or concatenation).",
+        "difficulty_score": 0.9
+      },
+      "ancestor_descendant_filter": {
+        "description": "Results filtered by ancestor/descendant or subtree membership conditions.",
+        "difficulty_score": 0.7
+      }
+    },
+    "data_mutation": {
+      "insert_basic": {
+        "description": "Simple INSERT of literal rows into a target table.",
+        "difficulty_score": 0.6
+      },
+      "insert_from_select": {
+        "description": "INSERT target populated by a SELECT over existing tables.",
+        "difficulty_score": 1.2
+      },
+      "update_with_join": {
+        "description": "UPDATE driven by a join (or correlated subquery) to set values from related rows.",
+        "difficulty_score": 1.4
+      },
+      "delete_with_exists": {
+        "description": "DELETE uses EXISTS/NOT EXISTS (or equivalent) to select rows to remove.",
+        "difficulty_score": 1.0
+      },
+      "upsert_conflict_action": {
+        "description": "UPSERT behavior with explicit conflict target/action (e.g., ON CONFLICT).",
+        "difficulty_score": 1.6
+      },
+      "mutation_with_check": {
+        "description": "Mutating statement constrained by meaningful WHERE predicates or checks.",
+        "difficulty_score": 0.7
+      },
+      "transaction_block": {
+        "description": "Multiple mutations composed within an explicit transaction block.",
+        "difficulty_score": 0.8
+      }
+    }
+  }
+}

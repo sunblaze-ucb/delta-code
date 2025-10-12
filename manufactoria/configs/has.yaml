@@ -1,0 +1,24 @@
+# Numerical operations focused ensemble
+# For testing numerical reasoning capabilities
+name: "has"
+train_ratio: 0.85
+output_dir: "problems/ensembles"
+seed: 42
+shuffle: true
+
+problem_specs:
+  # Core numerical operations across difficulties
+  - family: "contains_count"
+    difficulty: "easy"
+    color_mode: "four_color"
+    sample_count: 194
+  
+  - family: "contains_ordered"
+    difficulty: "easy"
+    color_mode: "four_color"
+    sample_count: 340
+  
+  - family: "contains_substring"
+    difficulty: "easy"
+    color_mode: "four_color"
+    sample_count: 340

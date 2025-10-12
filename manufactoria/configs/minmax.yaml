@@ -1,0 +1,14 @@
+# Numerical operations focused ensemble
+# For testing numerical reasoning capabilities
+name: "minmax"
+train_ratio: 0.98
+output_dir: "problems/ensembles"
+seed: 42
+shuffle: true
+
+problem_specs:
+
+  - family: "numerical_max_min"
+    difficulty: "medium"
+    color_mode: "two_color"
+    sample_count: 512

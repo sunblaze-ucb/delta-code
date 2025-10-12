@@ -1,0 +1,24 @@
+# Basic ensemble mixing different problem families
+name: "basic_mix"
+train_ratio: 0.93
+output_dir: "problems/ensembles"
+seed: 42
+shuffle: true
+
+problem_specs:
+  # Numerical problems - easy level
+  - family: "append_sequence"
+    difficulty: "basic"
+    color_mode: "four_color"
+    sample_count: 125
+  
+  - family: "exact_sequence"
+    difficulty: "basic"
+    color_mode: "two_color"
+    sample_count: 125
+  
+  # Pattern matching - easy level
+  - family: "starts_with"
+    difficulty: "basic"
+    color_mode: "two_color"
+    sample_count: 125

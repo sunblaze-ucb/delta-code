@@ -1,0 +1,752 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if problem %}
+        Edit {{ problem.name or 'Problem ' + problem.id|string }}
+    {% else %}
+        New Problem
+    {% endif %} - Manufactoria Manager
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="fas fa-edit me-2"></i>
+        {% if problem %}
+            Edit Problem: {{ problem.name or 'Untitled' }}
+        {% else %}
+            Create New Problem
+        {% endif %}
+    </h1>
+    <a href="{% if problem %}{{ url_for('view_problem', problem_id=problem.id) }}{% else %}{{ url_for('index') }}{% endif %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Cancel
+    </a>
+</div>
+
+<form id="problemForm">
+    <div class="row">
+        <!-- Basic Information -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Basic Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="problemName" class="form-label">Problem Name *</label>
+                        <input type="text" class="form-control" id="problemName" name="name" 
+                               value="{{ problem.name if problem else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="problemDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="problemDescription" name="description" 
+                                  rows="4" placeholder="Describe what this problem is about...">{{ problem.description if problem else '' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="problemCriteria" class="form-label">Criteria/Specification</label>
+                        <textarea class="form-control" id="problemCriteria" name="criteria" 
+                                  rows="4" placeholder="Specify the acceptance criteria...">{{ problem.criteria if problem else '' }}</textarea>
+                        <div class="form-text">Define what makes a robot's output acceptable or rejected.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="problemDifficulty" class="form-label">Difficulty Level</label>
+                        <select class="form-select" id="problemDifficulty" name="difficulty">
+                            {% set current_difficulty = problem.difficulty if problem else 'basic' %}
+                            <option value="basic" {% if current_difficulty == 'basic' %}selected{% endif %}>Basic</option>
+                            <option value="easy" {% if current_difficulty == 'easy' %}selected{% endif %}>Easy</option>
+                            <option value="medium" {% if current_difficulty == 'medium' %}selected{% endif %}>Medium</option>
+                            <option value="hard" {% if current_difficulty == 'hard' %}selected{% endif %}>Hard</option>
+                            <option value="advanced" {% if current_difficulty == 'advanced' %}selected{% endif %}>Advanced</option>
+                            <option value="expert" {% if current_difficulty == 'expert' %}selected{% endif %}>Expert</option>
+                            <option value="god" {% if current_difficulty == 'god' %}selected{% endif %}>God</option>
+                        </select>
+                        <div class="form-text">Select the difficulty level of this problem.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="problemType" class="form-label">Problem Type</label>
+                        <select class="form-select" id="problemType" name="problem_type">
+                            {% set current_type = problem.problem_type if problem else 'misc' %}
+                            {% for ptype in problem_types %}
+                            <option value="{{ ptype }}" {% if current_type == ptype %}selected{% endif %}>
+                                {{ ptype.replace('_', ' ').title() }}
+                            </option>
+                            {% endfor %}
+                            <option value="misc" {% if current_type == 'misc' %}selected{% endif %}>Miscellaneous</option>
+                        </select>
+                        <div class="form-text">Select the type/category of this problem. This determines which file it will be saved to.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="problemColorMode" class="form-label">Color Mode</label>
+                        <select class="form-select" id="problemColorMode" name="color_mode">
+                            {% set current_color_mode = problem.color_mode if problem else 'two_color' %}
+                            <option value="two_color" {% if current_color_mode == 'two_color' %}selected{% endif %}>Two Color (R/B)</option>
+                            <option value="four_color" {% if current_color_mode == 'four_color' %}selected{% endif %}>Four Color (R/B/Y/G)</option>
+                        </select>
+                        <div class="form-text">Select the color system for this problem. This affects which subdirectory the problem is saved to (c2/ or c4/).</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Nodes -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cubes me-2"></i>Available Node Types
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-text mb-3">Select which node types are available for this problem:</div>
+                    
+                    <div class="row">
+                        {% set all_nodes = ['START', 'END', 'PULLER_RB', 'PULLER_YG', 'PAINTER_RED', 'PAINTER_BLUE', 'PAINTER_YELLOW', 'PAINTER_GREEN'] %}
+                        {% set selected_nodes = problem.available_nodes if problem else all_nodes %}
+                        
+                        {% for node in all_nodes %}
+                        <div class="col-md-6 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" 
+                                       id="node_{{ node }}" name="available_nodes" value="{{ node }}"
+                                       {% if node in selected_nodes %}checked{% endif %}>
+                                <label class="form-check-label" for="node_{{ node }}">
+                                    <span class="badge bg-secondary">{{ node }}</span>
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Cases -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-vial me-2"></i>Test Cases
+            </h5>
+            <button type="button" class="btn btn-sm btn-success" onclick="addTestCase()">
+                <i class="fas fa-plus me-1"></i>Add Test Case
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="testCasesContainer">
+                {% if problem and problem.test_cases %}
+                    {% for test_case in problem.test_cases %}
+                    <div class="test-case-item border rounded p-3 mb-3" data-index="{{ loop.index0 }}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">Test Case {{ loop.index }}</h6>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTestCase({{ loop.index0 }})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="form-label">Input Tape</label>
+                                <input type="text" class="form-control" name="test_input" 
+                                       value="{{ test_case.input or '' }}" placeholder='e.g., "RBR" or ""'>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Expected Output</label>
+                                <input type="text" class="form-control" name="test_expected_output" 
+                                       value="{{ test_case.expected_output or '' }}" placeholder='e.g., "B" or ""'>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Expected Accepted</label>
+                                <select class="form-select" name="test_expected_accepted">
+                                    <option value="true" {% if test_case.expected_accepted %}selected{% endif %}>Accepted</option>
+                                    <option value="false" {% if not test_case.expected_accepted %}selected{% endif %}>Rejected</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Check Output</label>
+                                <select class="form-select" name="test_check_output">
+                                    <option value="true" {% if test_case.get('check_output', True) %}selected{% endif %}>Yes</option>
+                                    <option value="false" {% if not test_case.get('check_output', True) %}selected{% endif %}>No</option>
+                                </select>
+                                <div class="form-text small">Validate final tape?</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Description</label>
+                                <input type="text" class="form-control" name="test_description" 
+                                       value="{{ test_case.description or '' }}" placeholder="Optional description">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            
+            <div id="noTestCases" class="text-center py-3 text-muted" 
+                 {% if problem and problem.test_cases %}style="display: none;"{% endif %}>
+                <i class="fas fa-vial" style="font-size: 2rem;"></i>
+                <p class="mt-2">No test cases yet. Click "Add Test Case" to get started.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Solutions -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-code me-2"></i>Solutions
+            </h5>
+            <button type="button" class="btn btn-sm btn-success" onclick="addSolution()">
+                <i class="fas fa-plus me-1"></i>Add Solution
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="solutionsContainer">
+                {% if problem and problem.solutions %}
+                    {% for solution in problem.solutions %}
+                    <div class="solution-item border rounded p-3 mb-3" data-index="{{ loop.index0 }}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">Solution {{ loop.index }}</h6>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="validateSolution({{ loop.index0 }})">
+                                    <i class="fas fa-check me-1"></i>Validate
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSolution({{ loop.index0 }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Solution Name</label>
+                                <input type="text" class="form-control" name="solution_name" 
+                                       value="{{ solution.name or '' }}" placeholder="Optional solution name">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Description</label>
+                                <input type="text" class="form-control" name="solution_description" 
+                                       value="{{ solution.description or '' }}" placeholder="Optional description">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">DSL Solution</label>
+                            
+                            <!-- Editor Mode Toggle -->
+                            <div class="mode-toggle mb-3">
+                                <button type="button" class="btn btn-outline-primary active" 
+                                        onclick="switchEditorMode({{ loop.index0 }}, 'text')">
+                                    <i class="fas fa-code me-1"></i>Text Editor
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" 
+                                        onclick="switchEditorMode({{ loop.index0 }}, 'visual')">
+                                    <i class="fas fa-project-diagram me-1"></i>Visual Builder
+                                </button>
+                            </div>
+                            
+                            <!-- Text Editor -->
+                            <div class="editor-mode text-editor-mode">
+                                <textarea class="form-control code-editor" name="solution_code" rows="8">{{ solution.code or '' }}</textarea>
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                            onclick="loadFromVisual({{ loop.index0 }})">
+                                        <i class="fas fa-download me-1"></i>Load from Visual
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Visual Builder -->
+                            <div class="editor-mode visual-editor-mode" style="display: none;">
+                                <div id="visualBuilder{{ loop.index0 }}" class="visual-builder-container"></div>
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-success" 
+                                            onclick="syncToTextEditor({{ loop.index0 }})">
+                                        <i class="fas fa-sync me-1"></i>Sync to Text Editor
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-info" 
+                                            onclick="loadFromText({{ loop.index0 }})">
+                                        <i class="fas fa-upload me-1"></i>Load from Text
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="validation-result" style="display: none;"></div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            
+            <div id="noSolutions" class="text-center py-3 text-muted" 
+                 {% if problem and problem.solutions %}style="display: none;"{% endif %}>
+                <i class="fas fa-code" style="font-size: 2rem;"></i>
+                <p class="mt-2">No solutions yet. Click "Add Solution" to get started.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-between">
+        <a href="{% if problem %}{{ url_for('view_problem', problem_id=problem.id) }}{% else %}{{ url_for('index') }}{% endif %}" 
+           class="btn btn-secondary">
+            <i class="fas fa-times me-1"></i>Cancel
+        </a>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save me-1"></i>
+            {% if problem %}Update Problem{% else %}Create Problem{% endif %}
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let testCaseCounter = {{ (problem.test_cases|length) if problem and problem.test_cases else 0 }};
+let solutionCounter = {{ (problem.solutions|length) if problem and problem.solutions else 0 }};
+
+// Test Case Management
+function addTestCase() {
+    const container = document.getElementById('testCasesContainer');
+    const noTestCases = document.getElementById('noTestCases');
+    
+    const testCaseHtml = `
+        <div class="test-case-item border rounded p-3 mb-3" data-index="${testCaseCounter}">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Test Case ${testCaseCounter + 1}</h6>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTestCase(${testCaseCounter})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">Input Tape</label>
+                    <input type="text" class="form-control" name="test_input" 
+                           value="" placeholder='e.g., "RBR" or ""'>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Expected Output</label>
+                    <input type="text" class="form-control" name="test_expected_output" 
+                           value="" placeholder='e.g., "B" or ""'>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Expected Accepted</label>
+                    <select class="form-select" name="test_expected_accepted">
+                        <option value="true" selected>Accepted</option>
+                        <option value="false">Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Check Output</label>
+                    <select class="form-select" name="test_check_output">
+                        <option value="true" selected>Yes</option>
+                        <option value="false">No</option>
+                    </select>
+                    <div class="form-text small">Validate final tape?</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-control" name="test_description" 
+                           value="" placeholder="Optional description">
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', testCaseHtml);
+    noTestCases.style.display = 'none';
+    testCaseCounter++;
+}
+
+function removeTestCase(index) {
+    const item = document.querySelector(`[data-index="${index}"].test-case-item`);
+    if (item) {
+        item.remove();
+        updateTestCaseNumbers();
+        
+        if (document.querySelectorAll('.test-case-item').length === 0) {
+            document.getElementById('noTestCases').style.display = 'block';
+        }
+    }
+}
+
+function updateTestCaseNumbers() {
+    const items = document.querySelectorAll('.test-case-item');
+    items.forEach((item, index) => {
+        const header = item.querySelector('h6');
+        if (header) {
+            header.textContent = `Test Case ${index + 1}`;
+        }
+    });
+}
+
+// Solution Management
+function addSolution() {
+    const container = document.getElementById('solutionsContainer');
+    const noSolutions = document.getElementById('noSolutions');
+    
+    const solutionHtml = `
+        <div class="solution-item border rounded p-3 mb-3" data-index="${solutionCounter}">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Solution ${solutionCounter + 1}</h6>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="validateSolution(${solutionCounter})">
+                        <i class="fas fa-check me-1"></i>Validate
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSolution(${solutionCounter})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Solution Name</label>
+                    <input type="text" class="form-control" name="solution_name" 
+                           value="" placeholder="Optional solution name">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-control" name="solution_description" 
+                           value="" placeholder="Optional description">
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">DSL Solution</label>
+                
+                <!-- Editor Mode Toggle -->
+                <div class="mode-toggle mb-3">
+                    <button type="button" class="btn btn-outline-primary active" 
+                            onclick="switchEditorMode(${solutionCounter}, 'text')">
+                        <i class="fas fa-code me-1"></i>Text Editor
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" 
+                            onclick="switchEditorMode(${solutionCounter}, 'visual')">
+                        <i class="fas fa-project-diagram me-1"></i>Visual Builder
+                    </button>
+                </div>
+                
+                <!-- Text Editor -->
+                <div class="editor-mode text-editor-mode">
+                    <textarea class="form-control code-editor" name="solution_code" rows="8"></textarea>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                onclick="loadFromVisual(${solutionCounter})">
+                            <i class="fas fa-download me-1"></i>Load from Visual
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Visual Builder -->
+                <div class="editor-mode visual-editor-mode" style="display: none;">
+                    <div id="visualBuilder${solutionCounter}" class="visual-builder-container"></div>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-success" 
+                                onclick="syncToTextEditor(${solutionCounter})">
+                            <i class="fas fa-sync me-1"></i>Sync to Text Editor
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info" 
+                                onclick="loadFromText(${solutionCounter})">
+                            <i class="fas fa-upload me-1"></i>Load from Text
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="validation-result" style="display: none;"></div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', solutionHtml);
+    noSolutions.style.display = 'none';
+    
+    // Initialize visual builder for the new solution
+    const availableNodes = getAvailableNodes();
+    if (window.ManufactoriaManager && window.ManufactoriaManager.VisualFactoryBuilder) {
+        window.ManufactoriaManager.VisualFactoryBuilder.createInstance(`visualBuilder${solutionCounter}`, availableNodes);
+    }
+    
+    solutionCounter++;
+}
+
+function removeSolution(index) {
+    const item = document.querySelector(`[data-index="${index}"].solution-item`);
+    if (item) {
+        item.remove();
+        updateSolutionNumbers();
+        
+        if (document.querySelectorAll('.solution-item').length === 0) {
+            document.getElementById('noSolutions').style.display = 'block';
+        }
+    }
+}
+
+function updateSolutionNumbers() {
+    const items = document.querySelectorAll('.solution-item');
+    items.forEach((item, index) => {
+        const header = item.querySelector('h6');
+        if (header) {
+            header.textContent = `Solution ${index + 1}`;
+        }
+    });
+}
+
+function validateSolution(index) {
+    const item = document.querySelector(`[data-index="${index}"].solution-item`);
+    if (!item) return;
+    
+    const codeTextarea = item.querySelector('[name="solution_code"]');
+    const resultDiv = item.querySelector('.validation-result');
+    const button = item.querySelector('.btn-outline-primary');
+    
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Validating...';
+    button.disabled = true;
+    
+    fetch('/api/validate_dsl', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            dsl: codeTextarea.value
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const alertClass = data.valid ? 'alert-success' : 'alert-danger';
+        const icon = data.valid ? 'fa-check-circle' : 'fa-exclamation-triangle';
+        
+        resultDiv.innerHTML = `
+            <div class="alert ${alertClass}">
+                <i class="fas ${icon} me-2"></i>
+                <strong>${data.valid ? 'Valid DSL' : 'Invalid DSL'}:</strong> ${data.message}
+            </div>
+        `;
+        resultDiv.style.display = 'block';
+        
+        button.innerHTML = originalText;
+        button.disabled = false;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        button.innerHTML = originalText;
+        button.disabled = false;
+        alert('Error validating solution');
+    });
+}
+
+// Visual Builder Integration Functions
+function getAvailableNodes() {
+    const availableNodes = [];
+    const nodeCheckboxes = document.querySelectorAll('[name="available_nodes"]:checked');
+    nodeCheckboxes.forEach(checkbox => {
+        availableNodes.push(checkbox.value);
+    });
+    return availableNodes.length > 0 ? availableNodes : [
+        'START', 'END', 'PULLER_RB', 'PULLER_YG', 
+        'PAINTER_RED', 'PAINTER_BLUE', 'PAINTER_YELLOW', 'PAINTER_GREEN'
+    ];
+}
+
+function switchEditorMode(solutionIndex, mode) {
+    const solutionItem = document.querySelector(`[data-index="${solutionIndex}"].solution-item`);
+    if (!solutionItem) return;
+    
+    const textMode = solutionItem.querySelector('.text-editor-mode');
+    const visualMode = solutionItem.querySelector('.visual-editor-mode');
+    const buttons = solutionItem.querySelectorAll('.mode-toggle .btn');
+    
+    // Update button states
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    if (mode === 'text') {
+        textMode.style.display = 'block';
+        visualMode.style.display = 'none';
+        buttons[0].classList.add('active');
+    } else if (mode === 'visual') {
+        textMode.style.display = 'none';
+        visualMode.style.display = 'block';
+        buttons[1].classList.add('active');
+        
+                 // Initialize visual builder if not already done
+         const builderId = `visualBuilder${solutionIndex}`;
+         const builderContainer = document.getElementById(builderId);
+         if (builderContainer && !builderContainer.hasChildNodes()) {
+             const availableNodes = getAvailableNodes();
+             if (window.ManufactoriaManager && window.ManufactoriaManager.VisualFactoryBuilder) {
+                 window.ManufactoriaManager.VisualFactoryBuilder.createInstance(builderId, availableNodes);
+             }
+         }
+    }
+}
+
+function syncToTextEditor(solutionIndex) {
+    const builderId = `visualBuilder${solutionIndex}`;
+    const solutionItem = document.querySelector(`[data-index="${solutionIndex}"].solution-item`);
+    if (!solutionItem) return;
+    
+    const textarea = solutionItem.querySelector('[name="solution_code"]');
+    
+    // Get DSL from visual builder instance
+    if (window.ManufactoriaManager && window.ManufactoriaManager.VisualFactoryBuilder) {
+        const instance = window.ManufactoriaManager.VisualFactoryBuilder.getInstance(builderId);
+        if (instance) {
+            const dsl = instance.generateDSL();
+            if (dsl) {
+                textarea.value = dsl;
+                if (window.ManufactoriaManager.Utils) {
+                    window.ManufactoriaManager.Utils.showToast('DSL synced to text editor', 'success');
+                }
+            } else {
+                if (window.ManufactoriaManager.Utils) {
+                    window.ManufactoriaManager.Utils.showToast('No nodes in visual builder to sync', 'warning');
+                }
+            }
+        }
+    }
+}
+
+function loadFromText(solutionIndex) {
+    const builderId = `visualBuilder${solutionIndex}`;
+    const solutionItem = document.querySelector(`[data-index="${solutionIndex}"].solution-item`);
+    if (!solutionItem) return;
+    
+    const textarea = solutionItem.querySelector('[name="solution_code"]');
+    const dslCode = textarea.value.trim();
+    
+    if (!dslCode) {
+        if (window.ManufactoriaManager.Utils) {
+            window.ManufactoriaManager.Utils.showToast('No DSL code to load', 'warning');
+        }
+        return;
+    }
+    
+    // Load DSL into visual builder instance
+    if (window.ManufactoriaManager && window.ManufactoriaManager.VisualFactoryBuilder) {
+        const instance = window.ManufactoriaManager.VisualFactoryBuilder.getInstance(builderId);
+        if (instance) {
+            instance.loadDSL(dslCode);
+        }
+    }
+}
+
+function loadFromVisual(solutionIndex) {
+    syncToTextEditor(solutionIndex);
+}
+
+// Initialize visual builders for existing solutions on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const solutionItems = document.querySelectorAll('.solution-item');
+    solutionItems.forEach((item, index) => {
+        const builderId = `visualBuilder${index}`;
+        const builderContainer = document.getElementById(builderId);
+        if (builderContainer) {
+            const availableNodes = getAvailableNodes();
+            if (window.ManufactoriaManager && window.ManufactoriaManager.VisualFactoryBuilder) {
+                const instance = window.ManufactoriaManager.VisualFactoryBuilder.createInstance(builderId, availableNodes);
+                
+                // Load existing DSL if present
+                const textarea = item.querySelector('[name="solution_code"]');
+                if (textarea && textarea.value.trim() && instance) {
+                    setTimeout(() => {
+                        instance.loadDSL(textarea.value);
+                    }, 100);
+                }
+            }
+        }
+    });
+});
+
+// Form Submission
+document.getElementById('problemForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    // Collect test cases
+    const testCases = [];
+    const testCaseItems = document.querySelectorAll('.test-case-item');
+    testCaseItems.forEach(item => {
+        const input = item.querySelector('[name="test_input"]').value;
+        const expectedOutput = item.querySelector('[name="test_expected_output"]').value;
+        const expectedAccepted = item.querySelector('[name="test_expected_accepted"]').value === 'true';
+        const description = item.querySelector('[name="test_description"]').value;
+        
+        const checkOutput = item.querySelector('[name="test_check_output"]').value === 'true';
+        
+        testCases.push({
+            input: input,
+            expected_output: expectedOutput,
+            expected_accepted: expectedAccepted,
+            check_output: checkOutput,
+            description: description
+        });
+    });
+    
+    // Collect solutions
+    const solutions = [];
+    const solutionItems = document.querySelectorAll('.solution-item');
+    solutionItems.forEach(item => {
+        const name = item.querySelector('[name="solution_name"]').value;
+        const description = item.querySelector('[name="solution_description"]').value;
+        const code = item.querySelector('[name="solution_code"]').value;
+        
+        solutions.push({
+            name: name,
+            description: description,
+            code: code
+        });
+    });
+    
+    // Collect available nodes
+    const availableNodes = [];
+    const nodeCheckboxes = document.querySelectorAll('[name="available_nodes"]:checked');
+    nodeCheckboxes.forEach(checkbox => {
+        availableNodes.push(checkbox.value);
+    });
+    
+    const problemData = {
+        name: formData.get('name'),
+        description: formData.get('description'),
+        criteria: formData.get('criteria'),
+        difficulty: formData.get('difficulty'),
+        problem_type: formData.get('problem_type'),
+        color_mode: formData.get('color_mode'),
+        available_nodes: availableNodes,
+        test_cases: testCases,
+        solutions: solutions
+    };
+    
+    const method = {% if problem %}'PUT'{% else %}'POST'{% endif %};
+    const url = {% if problem %}'/api/problems/{{ problem.id }}'{% else %}'/api/problems'{% endif %};
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(problemData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            window.location.href = `/problem/${data.id}`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving problem');
+    });
+});
+</script>
+{% endblock %} 

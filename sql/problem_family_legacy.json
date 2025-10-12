@@ -1,0 +1,424 @@
+{
+  "difficulty": {
+    "levels": {
+      "easy": { "min": 0.0, "max": 2.9 },
+      "medium": { "min": 3.0, "max": 5.9 },
+      "hard": { "min": 6.0, "max": 8.9 },
+      "expert": { "min": 9.0, "max": 99.0 }
+    },
+    "bonus": {
+      "per_table": 1.0
+    },
+    "penalty": {
+      "select_star_only": -0.6,
+      "no_predicates": -1.2,
+      "limit_only": -1.0
+    }
+  },
+  "complexity": {
+    "basic_select": {
+      "description": "Single-table SELECT with plain projection.",
+      "difficulty_score": 0.0,
+      "target": 0.18
+    },
+    "filter_sort_limit": {
+      "description": "Adds WHERE, ORDER BY, and/or LIMIT/OFFSET.",
+      "difficulty_score": 0.8,
+      "target": 0.2
+    },
+    "single_join": {
+      "description": "Exactly one JOIN between two relations.",
+      "difficulty_score": 1.4,
+      "target": 0.14
+    },
+    "agg_group_having": {
+      "description": "Aggregates with GROUP BY and optional HAVING.",
+      "difficulty_score": 1.6,
+      "target": 0.16
+    },
+    "cte_nonrecursive": {
+      "description": "Non-recursive WITH common table expressions.",
+      "difficulty_score": 1.6,
+      "target": 0.03
+    },
+    "subquery_uncorrelated": {
+      "description": "Subquery that does not reference the outer query.",
+      "difficulty_score": 2.0,
+      "target": 0.06
+    },
+    "set_operations": {
+      "description": "Use of UNION, INTERSECT, or EXCEPT.",
+      "difficulty_score": 2.2,
+      "target": 0.06
+    },
+    "window_functions": {
+      "description": "Window functions like ROW_NUMBER, RANK, LAG/LEAD, NTILE, etc.",
+      "difficulty_score": 2.6,
+      "target": 0.02
+    },
+    "multi_joins": {
+      "description": "Two or more JOINs of any type.",
+      "difficulty_score": 3.0,
+      "target": 0.1
+    },
+    "subquery_correlated": {
+      "description": "Subquery that references columns from the outer query.",
+      "difficulty_score": 3.2,
+      "target": 0.04
+    },
+    "cte_recursive": {
+      "description": "Recursive CTEs for hierarchical/path queries (read-only).",
+      "difficulty_score": 3.6,
+      "target": 0.01
+    }
+  },
+  "task_type": {
+    "retrieve": {
+      "relational_lookup": {
+        "description": "Return rows/columns that satisfy stated conditions across one or more tables.",
+        "difficulty_score": 0.0,
+        "target": 0.18
+      },
+      "boolean_check": {
+        "description": "Answer a yes/no question by testing existence or a condition.",
+        "difficulty_score": -0.4,
+        "target": 0.06
+      },
+      "scalar_stat": {
+        "description": "Produce a single value (e.g., counts, minima/maxima, averages, sums).",
+        "difficulty_score": 0.5,
+        "target": 0.07
+      },
+      "summarize_groups": {
+        "description": "Return grouped summaries or KPIs over categories/dimensions.",
+        "difficulty_score": 1.0,
+        "target": 0.08
+      },
+      "ranking": {
+        "description": "Produce an ordered list and optionally the top-k entries for a criterion.",
+        "difficulty_score": 0.8,
+        "target": 0.07
+      },
+      "groupwise_extrema": {
+        "description": "Return the best/worst item within each group or category.",
+        "difficulty_score": 1.6,
+        "target": 0.04
+      },
+      "set_relationship": {
+        "description": "Express overlaps, exclusions, or unions between cohorts/result sets.",
+        "difficulty_score": 1.2,
+        "target": 0.05
+      },
+      "temporal_reasoning": {
+        "description": "Filter or compare records across time windows or periods.",
+        "difficulty_score": 1.0,
+        "target": 0.06
+      },
+      "text_pattern": {
+        "description": "Filter or classify by string/pattern criteria (e.g., wildcard/regex if available.).",
+        "difficulty_score": 0.6,
+        "target": 0.04
+      },
+      "json_query": {
+        "description": "Query or project fields from JSON values using JSON1 functions when available.",
+        "difficulty_score": 1.3,
+        "target": 0.02
+      },
+      "deduplicated_listing": {
+        "description": "Return canonicalized/unique listings (e.g., DISTINCT) without mutating data.",
+        "difficulty_score": 0.2,
+        "target": 0.02
+      },
+      "hierarchy_traversal": {
+        "description": "Retrieve hierarchical or path-based relationships (e.g., parent↔child chains.).",
+        "difficulty_score": 2.4,
+        "target": 0.01
+      }
+    },
+    "manipulate": {
+      "insert_rows": {
+        "description": "Insert one or more new rows into a table.",
+        "difficulty_score": 0.6,
+        "target": 0.05
+      },
+      "insert_rows_from_select": {
+        "description": "Insert rows by selecting from existing tables (copy/append).",
+        "difficulty_score": 1.6,
+        "target": 0.04
+      },
+      "update_rows": {
+        "description": "Modify existing rows matching stated conditions.",
+        "difficulty_score": 1.2,
+        "target": 0.05
+      },
+      "delete_rows": {
+        "description": "Remove rows matching stated conditions.",
+        "difficulty_score": 0.8,
+        "target": 0.04
+      },
+      "upsert_rows": {
+        "description": "Insert new rows or update existing ones on key conflicts (INSERT … ON CONFLICT / OR REPLACE).",
+        "difficulty_score": 2.0,
+        "target": 0.02
+      }
+    },
+    "define": {
+      "create_table": {
+        "description": "Create a (temp or persistent) table with specified columns and constraints.",
+        "difficulty_score": 0.8,
+        "target": 0.016
+      },
+      "add_column": {
+        "description": "Add a new column to an existing table.",
+        "difficulty_score": 0.6,
+        "target": 0.012
+      },
+      "rename_table_or_column": {
+        "description": "Rename an existing table or column.",
+        "difficulty_score": 0.4,
+        "target": 0.008
+      },
+      "remove_table": {
+        "description": "Remove a (temp or persistent) table.",
+        "difficulty_score": 0.6,
+        "target": 0.008
+      },
+      "drop_column": {
+        "description": "Drop a column from an existing table.",
+        "difficulty_score": 1.0,
+        "target": 0.008
+      },
+      "create_view": {
+        "description": "Define or drop a view from a query.",
+        "difficulty_score": 0.3,
+        "target": 0.008
+      },
+      "drop_view": {
+        "description": "Remove an existing view.",
+        "difficulty_score": 0.4,
+        "target": 0.004
+      },
+      "create_or_drop_index": {
+        "description": "Create or drop an index on one or more columns to optimize lookups.",
+        "difficulty_score": 0.5,
+        "target": 0.012
+      },
+      "drop_index": {
+        "description": "Remove an existing index.",
+        "difficulty_score": 0.4,
+        "target": 0.004
+      },
+      "create_foreign_key": {
+        "description": "Create a foreign key constraint between two tables.",
+        "difficulty_score": 0.7,
+        "target": 0.012
+      },
+      "drop_foreign_key": {
+        "description": "Remove an existing foreign key constraint.",
+        "difficulty_score": 0.4,
+        "target": 0.008
+      }
+    }
+  },
+  "clauses": {
+    "core": [
+      {
+        "name": "SELECT",
+        "description": "Specifies the columns or expressions to be returned by the query.",
+        "required": true,
+        "pairs_with": ["DISTINCT", "AS"]
+      },
+      {
+        "name": "FROM",
+        "description": "Specifies the source table or tables for the query.",
+        "required": true,
+        "pairs_with": ["JOIN", "AS"]
+      },
+      {
+        "name": "JOIN",
+        "description": "Combines rows from two or more tables based on a related column.",
+        "required": false,
+        "types": ["INNER", "LEFT OUTER", "RIGHT OUTER", "FULL OUTER"],
+        "depends_on": ["FROM"],
+        "pairs_with": ["ON", "USING"]
+      },
+      {
+        "name": "WHERE",
+        "description": "Filters rows based on specified boolean conditions.",
+        "required": false,
+        "pairs_with": ["AND", "OR", "NOT", "IN", "BETWEEN", "LIKE", "EXISTS"]
+      },
+      {
+        "name": "GROUP BY",
+        "description": "Groups rows that have the same values into summary rows, typically for aggregations.",
+        "required": false,
+        "depends_on": ["SELECT with Aggregate Function"]
+      },
+      {
+        "name": "HAVING",
+        "description": "Filters groups after aggregation has been performed.",
+        "required": false,
+        "depends_on": ["GROUP BY"]
+      },
+      {
+        "name": "ORDER BY",
+        "description": "Sorts the final result set.",
+        "required": false,
+        "pairs_with": ["ASC", "DESC"]
+      },
+      {
+        "name": "LIMIT",
+        "description": "Restricts the number of rows returned in the result set.",
+        "required": false,
+        "pairs_with": ["OFFSET"]
+      }
+    ],
+    "other": [
+      {
+        "name": "WITH",
+        "description": "Defines one or more Common Table Expressions (CTEs) for use in a subsequent query.",
+        "required": false,
+        "pairs_with": ["RECURSIVE"]
+      },
+      {
+        "name": "UNION",
+        "description": "Combines the result sets of two or more SELECT statements (removes duplicates).",
+        "required": false,
+        "pairs_with": ["ALL"]
+      },
+      {
+        "name": "INTERSECT",
+        "description": "Returns only the rows that appear in both result sets of two SELECT statements.",
+        "required": false
+      },
+      {
+        "name": "EXCEPT",
+        "description": "Returns rows from the first SELECT statement that are not present in the second.",
+        "required": false
+      }
+    ],
+    "aggregate": [
+      { "name": "COUNT", "description": "Counts rows or non-null values." },
+      {
+        "name": "SUM",
+        "description": "Calculates the sum of a set of values."
+      },
+      {
+        "name": "AVG",
+        "description": "Calculates the average of a set of values."
+      },
+      { "name": "MIN", "description": "Finds the minimum value in a set." },
+      { "name": "MAX", "description": "Finds the maximum value in a set." },
+      {
+        "name": "COUNT(DISTINCT ...)",
+        "description": "Counts unique non-null values."
+      }
+    ],
+    "window": [
+      {
+        "name": "ROW_NUMBER",
+        "description": "Assigns a unique integer to each row within a partition."
+      },
+      {
+        "name": "RANK",
+        "description": "Assigns a rank to each row within a partition, with gaps for ties."
+      },
+      { "name": "DENSE_RANK", "description": "Assigns a rank without gaps." },
+      {
+        "name": "LAG / LEAD",
+        "description": "Accesses data from a previous (LAG) or subsequent (LEAD) row."
+      },
+      {
+        "name": "FIRST_VALUE / LAST_VALUE",
+        "description": "Returns the first or last value in an ordered partition."
+      }
+    ],
+    "scalar_numeric": [
+      { "name": "ABS", "description": "Returns the absolute value." },
+      {
+        "name": "ROUND",
+        "description": "Rounds a number to a specified number of decimal places."
+      },
+      {
+        "name": "CEIL / FLOOR",
+        "description": "Rounds a number up or down to the nearest integer."
+      },
+      { "name": "MOD", "description": "Returns the remainder of a division." }
+    ],
+    "scalar_string": [
+      {
+        "name": "UPPER / LOWER",
+        "description": "Converts a string to uppercase or lowercase."
+      },
+      { "name": "LENGTH", "description": "Returns the length of a string." },
+      { "name": "SUBSTR / SUBSTRING", "description": "Extracts a substring." },
+      { "name": "CONCAT", "description": "Concatenates two or more strings." },
+      { "name": "TRIM", "description": "Removes leading/trailing spaces." },
+      {
+        "name": "REPLACE",
+        "description": "Replaces all occurrences of a substring."
+      }
+    ],
+    "scalar_datetime": [
+      {
+        "name": "NOW / CURRENT_TIMESTAMP",
+        "description": "Returns the current date and time."
+      },
+      { "name": "CURRENT_DATE", "description": "Returns the current date." },
+      {
+        "name": "EXTRACT / YEAR / MONTH / DAY",
+        "description": "Extracts parts from a date/time value."
+      },
+      {
+        "name": "DATE_ADD / DATE_SUB",
+        "description": "Adds or subtracts a time interval from a date."
+      },
+      {
+        "name": "DATEDIFF",
+        "description": "Calculates the difference between two dates."
+      }
+    ],
+    "conditional": [
+      {
+        "name": "CASE WHEN",
+        "syntax": "CASE WHEN condition THEN result ... ELSE result END",
+        "description": "Returns a value based on a series of conditions."
+      },
+      {
+        "name": "COALESCE",
+        "syntax": "COALESCE(value1, value2, ...)",
+        "description": "Returns the first non-null value in a list."
+      },
+      {
+        "name": "NULLIF",
+        "syntax": "NULLIF(value1, value2)",
+        "description": "Returns NULL if the two expressions are equal, otherwise returns the first expression."
+      }
+    ],
+    "subquery_predicates": [
+      {
+        "name": "IN",
+        "description": "Checks if a value is present in a list or subquery result."
+      },
+      {
+        "name": "EXISTS",
+        "description": "Checks if a subquery returns any rows."
+      },
+      {
+        "name": "ANY / SOME",
+        "description": "Compares a value to each value in a list or subquery result."
+      },
+      {
+        "name": "ALL",
+        "description": "Compares a value to every value in a list or subquery result."
+      }
+    ],
+    "type_conversion": [
+      {
+        "name": "CAST",
+        "syntax": "CAST(expression AS datatype)",
+        "description": "Converts a value from one data type to another."
+      }
+    ]
+  }
+}

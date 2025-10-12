@@ -1,0 +1,21 @@
+# Numerical operations focused ensemble
+# For testing numerical reasoning capabilities
+name: "regex"
+train_ratio: 0.85
+output_dir: "problems/ensembles"
+seed: 42
+shuffle: true
+
+problem_specs:
+
+  - family: "regex_pattern"
+    difficulty: "easy"
+    color_mode: "four_color"
+    sample_count: 60
+
+  - family: "regex_pattern"
+    difficulty: "medium"
+    color_mode: "four_color"
+    sample_count: 600
+
+

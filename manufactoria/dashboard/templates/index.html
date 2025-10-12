@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block title %}Problems - Manufactoria Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="fas fa-puzzle-piece me-2"></i>
+        Manufactoria Problems
+    </h1>
+    <a href="{{ url_for('new_problem') }}" class="btn btn-success">
+        <i class="fas fa-plus me-1"></i>New Problem
+    </a>
+</div>
+
+<!-- Problem Filters -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <label for="problemTypeFilter" class="form-label">Filter by Problem Type:</label>
+        <select class="form-select" id="problemTypeFilter" onchange="applyFilters()">
+            <option value="">All Types</option>
+            {% for problem_type in problem_types %}
+            <option value="{{ problem_type }}" {% if problem_type == selected_type %}selected{% endif %}>
+                {{ problem_type.replace('_', ' ').title() }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label for="colorModeFilter" class="form-label">Filter by Color Mode:</label>
+        <select class="form-select" id="colorModeFilter" onchange="applyFilters()">
+            <option value="">All Color Modes</option>
+            <option value="two_color" {% if selected_color_mode == 'two_color' %}selected{% endif %}>
+                Two Color (R/B)
+            </option>
+            <option value="four_color" {% if selected_color_mode == 'four_color' %}selected{% endif %}>
+                Four Color (R/B/Y/G)
+            </option>
+        </select>
+    </div>
+    <div class="col-md-6 d-flex align-items-end">
+        <div class="text-muted">
+            {% if selected_type or selected_color_mode %}
+                Showing problems
+                {% if selected_type %}of type: <strong>{{ selected_type.replace('_', ' ').title() }}</strong>{% endif %}
+                {% if selected_type and selected_color_mode %} and {% endif %}
+                {% if selected_color_mode %}
+                    in <strong>
+                    {% if selected_color_mode == 'two_color' %}Two Color (R/B)
+                    {% elif selected_color_mode == 'four_color' %}Four Color (R/B/Y/G)
+                    {% else %}{{ selected_color_mode.replace('_', ' ').title() }}{% endif %}
+                    </strong> mode
+                {% endif %}
+            {% else %}
+                Showing all problems
+            {% endif %}
+            {% if pagination.total > 0 %}
+                ({{ pagination.total }} total, showing {{ problems|length }} on page {{ pagination.page }} of {{ pagination.total_pages }})
+            {% else %}
+                (0 total)
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if problems %}
+<div class="row">
+    {% for problem in problems %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 problem-card">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title">
+                    <i class="fas fa-cog me-2 text-primary"></i>
+                    {{ problem.name or 'Untitled Problem' }}
+                </h5>
+                <p class="card-text text-muted small mb-2">
+                    ID: {{ problem.id }}
+                </p>
+                <div class="flex-grow-1">
+                    <p class="card-text">
+                        {{ problem.description[:100] + '...' if problem.description and problem.description|length > 100 else problem.description or 'No description provided.' }}
+                    </p>
+                    
+                    {% if problem.criteria %}
+                    <div class="card-text">
+                        <div class="bg-primary bg-opacity-10 border border-primary p-2 rounded mb-2">
+                            <small class="text-primary fw-bold">
+                                <i class="fas fa-clipboard-check me-1"></i>Criteria:
+                            </small>
+                            <div class="small text-dark mt-1">
+                                {{ problem.criteria[:120] + '...' if problem.criteria|length > 120 else problem.criteria }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-2">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        {% if problem.updated_at %}
+                            Updated: {{ problem.updated_at[:10] }}
+                        {% elif problem.created_at %}
+                            Created: {{ problem.created_at[:10] }}
+                        {% endif %}
+                    </small>
+                </div>
+
+                <div class="mb-2">
+                    {% if problem.problem_type %}
+                        <span class="badge bg-primary me-1">
+                            <i class="fas fa-tag me-1"></i>{{ problem.problem_type.replace('_', ' ').title() }}
+                        </span>
+                    {% endif %}
+                    {% if problem.test_cases %}
+                        <span class="badge bg-info me-1">
+                            <i class="fas fa-vial me-1"></i>{{ problem.test_cases|length }} tests
+                        </span>
+                    {% endif %}
+                    {% if problem.solutions %}
+                        <span class="badge bg-success me-1">
+                            <i class="fas fa-check me-1"></i>{{ problem.solutions|length }} solutions
+                        </span>
+                    {% endif %}
+                    {% if problem.available_nodes %}
+                        <span class="badge bg-secondary me-1">
+                            <i class="fas fa-cube me-1"></i>{{ problem.available_nodes|length }} nodes
+                        </span>
+                    {% endif %}
+                    {% set color_mode = problem.get('color_mode', 'two_color') %}
+                    {% if color_mode == 'two_color' %}
+                        <span class="badge bg-info me-1">
+                            <i class="fas fa-palette me-1"></i>2-Color
+                        </span>
+                    {% elif color_mode == 'four_color' %}
+                        <span class="badge bg-warning me-1">
+                            <i class="fas fa-palette me-1"></i>4-Color
+                        </span>
+                    {% endif %}
+                    {% set difficulty = problem.get('difficulty', 'basic') %}
+                    {% if difficulty == 'basic' %}
+                        <span class="badge bg-success me-1">
+                            <i class="fas fa-star me-1"></i>{{ difficulty.title() }}
+                        </span>
+                    {% elif difficulty == 'easy' %}
+                        <span class="badge bg-info me-1">
+                            <i class="fas fa-star me-1"></i>{{ difficulty.title() }}
+                        </span>
+                    {% elif difficulty == 'medium' %}
+                        <span class="badge bg-warning me-1">
+                            <i class="fas fa-star me-1"></i>{{ difficulty.title() }}
+                        </span>
+                    {% elif difficulty == 'hard' %}
+                        <span class="badge bg-danger me-1">
+                            <i class="fas fa-star me-1"></i>{{ difficulty.title() }}
+                        </span>
+                    {% elif difficulty == 'advanced' %}
+                        <span class="badge bg-dark me-1">
+                            <i class="fas fa-star me-1"></i>{{ difficulty.title() }}
+                        </span>
+                    {% elif difficulty == 'expert' %}
+                        <span class="badge bg-primary me-1">
+                            <i class="fas fa-star me-1"></i>{{ difficulty.title() }}
+                        </span>
+                    {% elif difficulty == 'god' %}
+                        <span class="badge bg-secondary me-1">
+                            <i class="fas fa-crown me-1"></i>{{ difficulty.title() }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div class="btn-group mt-auto" role="group">
+                    <a href="{{ url_for('view_problem', problem_id=problem.id) }}" 
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye me-1"></i>View
+                    </a>
+                    <a href="{{ url_for('edit_problem', problem_id=problem.id) }}" 
+                       class="btn btn-outline-warning btn-sm">
+                        <i class="fas fa-edit me-1"></i>Edit
+                    </a>
+                    <button class="btn btn-outline-danger btn-sm delete-btn" 
+                            data-problem-id="{{ problem.id }}" 
+                            data-problem-name="{{ problem.name or 'Untitled' }}">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination Controls -->
+{% if pagination.total_pages > 1 %}
+<nav aria-label="Problem pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <!-- Previous Page -->
+        {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="goToPage({{ pagination.prev_num }})" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </span>
+            </li>
+        {% endif %}
+        
+        <!-- First Page -->
+        {% if pagination.pages[0] > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="goToPage(1)">1</a>
+            </li>
+            {% if pagination.pages[0] > 2 %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            {% endif %}
+        {% endif %}
+        
+        <!-- Page Numbers -->
+        {% for page_num in pagination.pages %}
+            {% if page_num == pagination.page %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_num }}</span>
+                </li>
+            {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="#" onclick="goToPage({{ page_num }})">{{ page_num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        <!-- Last Page -->
+        {% if pagination.pages[-1] < pagination.total_pages %}
+            {% if pagination.pages[-1] < pagination.total_pages - 1 %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            {% endif %}
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="goToPage({{ pagination.total_pages }})">{{ pagination.total_pages }}</a>
+            </li>
+        {% endif %}
+        
+        <!-- Next Page -->
+        {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="goToPage({{ pagination.next_num }})" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </span>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+
+<!-- Items per page selector -->
+<div class="d-flex justify-content-center align-items-center mt-3">
+    <label for="perPageSelect" class="form-label me-2 mb-0">Items per page:</label>
+    <select class="form-select w-auto" id="perPageSelect" onchange="changePerPage()" style="width: auto !important;">
+        <option value="6" {% if pagination.per_page == 6 %}selected{% endif %}>6</option>
+        <option value="12" {% if pagination.per_page == 12 %}selected{% endif %}>12</option>
+        <option value="24" {% if pagination.per_page == 24 %}selected{% endif %}>24</option>
+        <option value="36" {% if pagination.per_page == 36 %}selected{% endif %}>36</option>
+        <option value="50" {% if pagination.per_page == 50 %}selected{% endif %}>50</option>
+    </select>
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <div class="mb-4">
+        <i class="fas fa-puzzle-piece text-muted" style="font-size: 4rem;"></i>
+    </div>
+    <h3 class="text-muted">No problems yet</h3>
+    <p class="text-muted mb-4">Start building your first Manufactoria problem!</p>
+    <a href="{{ url_for('new_problem') }}" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus me-2"></i>Create First Problem
+    </a>
+</div>
+{% endif %}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the problem "<span id="deleteProblemName"></span>"?</p>
+                <p class="text-muted mb-0">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let problemToDelete = null;
+
+// Get current URL parameters
+function getUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        type: params.get('type') || '',
+        page: parseInt(params.get('page')) || 1,
+        per_page: parseInt(params.get('per_page')) || 12
+    };
+}
+
+// Navigate to a specific page
+function goToPage(pageNumber) {
+    const url = new URL(window.location);
+    url.searchParams.set('page', pageNumber);
+    window.location.href = url.toString();
+}
+
+// Change items per page
+function changePerPage() {
+    const selectedPerPage = document.getElementById('perPageSelect').value;
+    const url = new URL(window.location);
+    url.searchParams.set('per_page', selectedPerPage);
+    url.searchParams.set('page', 1); // Reset to first page when changing per_page
+    window.location.href = url.toString();
+}
+
+// Apply filters for both type and color mode
+function applyFilters() {
+    const selectedType = document.getElementById('problemTypeFilter').value;
+    const selectedColorMode = document.getElementById('colorModeFilter').value;
+    const url = new URL(window.location);
+    
+    if (selectedType) {
+        url.searchParams.set('type', selectedType);
+    } else {
+        url.searchParams.delete('type');
+    }
+    
+    if (selectedColorMode) {
+        url.searchParams.set('color_mode', selectedColorMode);
+    } else {
+        url.searchParams.delete('color_mode');
+    }
+    
+    // Reset to first page when changing filters
+    url.searchParams.set('page', 1);
+    
+    window.location.href = url.toString();
+}
+
+// Backwards compatibility - keep old function name
+function filterByType() {
+    applyFilters();
+}
+
+// Handle delete button clicks
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-btn')) {
+        const button = e.target.closest('.delete-btn');
+        const problemId = button.getAttribute('data-problem-id');
+        const problemName = button.getAttribute('data-problem-name');
+        
+        problemToDelete = problemId;
+        document.getElementById('deleteProblemName').textContent = problemName;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+});
+
+document.getElementById('confirmDelete').addEventListener('click', function() {
+    if (problemToDelete) {
+        fetch(`/api/problems/${problemToDelete}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error deleting problem');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting problem');
+        });
+    }
+});
+</script>
+{% endblock %} 

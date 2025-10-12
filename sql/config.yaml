@@ -1,0 +1,55 @@
+# config.yaml
+# -------------------------------------------------------------------
+# Configuration for SQL Generation Pipeline with 9-Step Workflow
+# 1. Setup sampler based on batch_size and num_iteration
+# 2. Generate query (forward)
+# 3. Generate groundtruth (forward)  
+# 4. Verify format
+# 5. Verify groundtruth (forward)
+# 6. Generate unit test (backward)
+# 7. Generate query based on groundtruth (backward)
+# 8. Verify again (backward)
+# 9. Save to dataset.jsonl if correct and adhere
+# 
+# USAGE:
+#   python run.py --config config.yaml
+#   python run.py --config config.yaml --difficulty easy --batch_size 5 --num_iteration 1
+# -------------------------------------------------------------------
+
+# Global settings
+verbose: true                    # Enable verbose output when running the pipeline
+seed: null                       # Set a seed for the random number generator
+
+# Execution settings
+execution:
+  batch_size: 10                  # Number of parallel pipeline runs per iteration 
+  num_iteration: 1              # Number of iterations (batch runs) to execute
+  diversity_sampling: true       # Use intelligent sampling for diversity
+  tolerance: 0.1                 # Tolerance around target proportions (+/-50%)
+  single_problem_family: relational_joining    # Set to a specific family name to focus only on that family (e.g. "relational_joining")
+
+# Pipeline configuration
+pipeline:
+  difficulty: hard             # easy | medium | hard
+
+# Model configuration
+model:
+  name: o4-mini
+
+# Paths
+paths:
+  database_path: database
+  result_base: result
+  query_style_file: query_style.json
+  problem_family_file: problem_family.json
+
+# Converter configuration
+converter:
+  drop_incomplete: true                  # Drop incomplete records from final dataset
+
+# Temperature configuration (per module)
+temperature:
+  query_generation_forward: 0.7         # More creative for initial query generation
+  groundtruth_generation: 0.2           # More precise for SQL generation
+  groundtruth_verification: 0.1         # More precise for verification
+  query_generation_backward: 0.5        # More creative for refined query generation

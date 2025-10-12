@@ -1,0 +1,31 @@
+{
+  "tone": [
+    "neutral tone",
+    "formal tone",
+    "concise tone",
+    "explanatory tone",
+    "investigative tone",
+    "comparative tone",
+    "instructional tone",
+    "hypothesis-driven",
+    "socratic framing",
+    "clarifying question style"
+  ],
+  "format": [
+    "one-sentence",
+    "two-sentence",
+    "single-clause",
+    "multi-clause",
+    "headline-style",
+    "bullet-style phrasing",
+    "no preamble"
+  ],
+  "clarity": [
+    "unambiguous wording",
+    "precise quantifiers",
+    "explicit units if any",
+    "avoid domain nomenclature",
+    "avoid proper nouns",
+    "avoid example values"
+  ]
+}

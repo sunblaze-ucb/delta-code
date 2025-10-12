@@ -1,0 +1,19 @@
+# Numerical operations focused ensemble
+# For testing numerical reasoning capabilities
+name: "ends"
+train_ratio: 0.85
+output_dir: "problems/ensembles"
+seed: 42
+shuffle: true
+
+problem_specs:
+
+  - family: "ends_with"
+    difficulty: "easy"
+    color_mode: "two_color"
+    sample_count: 300
+
+  - family: "ends_with"
+    difficulty: "medium"
+    color_mode: "two_color"
+    sample_count: 1000

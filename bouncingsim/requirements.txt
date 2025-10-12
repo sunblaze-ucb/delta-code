@@ -1,0 +1,7 @@
+matplotlib
+numpy
+Pillow
+pygame
+box2d
+huggingface_hub 
+fastapi
